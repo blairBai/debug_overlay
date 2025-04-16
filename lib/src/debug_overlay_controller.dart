@@ -61,7 +61,9 @@ class DebugOverlayController {
   List<Widget>? bottomWidgets;
 
   void show(BuildContext context) {
-    if (!kDebugMode || _isShown) return;
+    // debug 模式下不显示 -> 由外部控制
+    // if (!kDebugMode || _isShown) return;
+    if (_isShown) return;
 
     _isShown = true;
     _entry = OverlayEntry(
