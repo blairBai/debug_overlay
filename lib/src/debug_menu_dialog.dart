@@ -11,6 +11,7 @@ class DebugMenuDialog extends StatefulWidget {
   final void Function(String ip, String port, bool enabled)? onSaveProxyConfig;
   final void Function()? onForceLogin;
   final List<Widget>? bottomWidgets;
+  final void Function(List<(String, String)> envs)? onEnvsChanged;
 
   const DebugMenuDialog({
     super.key,
@@ -23,6 +24,7 @@ class DebugMenuDialog extends StatefulWidget {
     this.onSaveProxyConfig,
     this.onForceLogin,
     this.bottomWidgets,
+    this.onEnvsChanged,
   });
 
   @override
@@ -150,6 +152,8 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
                   setState(() {
                     _envs.add((name, url));
                   });
+                  // 回调环境列表变化
+                  widget.onEnvsChanged?.call(_envs);
                   Navigator.of(context).pop();
                   '环境添加成功'.showToast(context);
                 }
@@ -191,6 +195,8 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
                 setState(() {
                   _envs.removeAt(index);
                 });
+                // 回调环境列表变化
+                widget.onEnvsChanged?.call(_envs);
                 Navigator.of(context).pop();
                 '环境删除成功'.showToast(context);
               },

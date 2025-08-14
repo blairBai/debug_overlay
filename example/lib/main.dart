@@ -36,12 +36,18 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isProxyEnabled = false;
   String _proxyIp = '127.0.0.1';
   String _proxyPort = '8888';
+  List<(String, String)> _currentEnvs = [
+    ('开发环境', 'https://dev.example.com'),
+    ('测试环境', 'https://test.example.com'),
+    ('预发布环境', 'https://staging.example.com'),
+  ];
 
   @override
   void initState() {
     super.initState();
     _debugController = DebugOverlayController(
       currentEnvUrl: _currentEnv,
+      envs: _currentEnvs,
       onEnvSwitch: (String newEnv) {
         setState(() {
           _currentEnv = newEnv;
@@ -50,6 +56,18 @@ class _MyHomePageState extends State<MyHomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('环境已切换到: $newEnv'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      onEnvsChanged: (List<(String, String)> newEnvs) {
+        setState(() {
+          _currentEnvs = newEnvs;
+        });
+        // 显示环境列表变化提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('环境列表已更新，当前共有 ${newEnvs.length} 个环境'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -174,6 +192,11 @@ class _MyHomePageState extends State<MyHomePage> {
               const SizedBox(height: 16),
               Text(
                 '当前环境: $_currentEnv',
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '环境数量: ${_currentEnvs.length}',
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 8),

@@ -125,7 +125,30 @@ _debugController = DebugOverlayController(
   onEnvSwitch: (String newEnv) {
     // 处理环境切换
   },
+  onEnvsChanged: (List<(String, String)> newEnvs) {
+    // 处理环境列表变化（添加/删除环境后）
+    print('环境列表已更新: ${newEnvs.length} 个环境');
+  },
 );
+```
+
+#### 环境变化回调
+
+当用户通过调试菜单添加或删除环境时，会触发 `onEnvsChanged` 回调：
+
+```dart
+onEnvsChanged: (List<(String, String)> newEnvs) {
+  // 保存新的环境列表到本地存储
+  _saveEnvsToStorage(newEnvs);
+  
+  // 更新应用状态
+  setState(() {
+    _currentEnvs = newEnvs;
+  });
+  
+  // 显示提示信息
+  showSnackBar('环境列表已更新');
+},
 ```
 
 #### 动态环境管理
@@ -182,6 +205,7 @@ _debugController = DebugOverlayController(
 | `onSaveProxyConfig` | `Function(String, String, bool)?` | 保存代理配置回调 |
 | `onForceLogin` | `Function()?` | 强制登录回调 |
 | `bottomWidgets` | `List<Widget>?` | 底部自定义组件 |
+| `onEnvsChanged` | `Function(List<(String, String)>)?` | 环境列表变化回调 |
 
 #### 方法
 

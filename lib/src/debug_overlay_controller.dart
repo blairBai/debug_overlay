@@ -17,6 +17,7 @@ class DebugOverlayController {
     void Function()? onForceLogin,
     Widget? customDialog,
     List<Widget>? bottomWidgets,
+    void Function(List<(String, String)> envs)? onEnvsChanged,
   }) {
     _instance ??= DebugOverlayController._internal(
       currentEnvUrl: currentEnvUrl,
@@ -29,6 +30,7 @@ class DebugOverlayController {
       onForceLogin: onForceLogin,
       customDialog: customDialog,
       bottomWidgets: bottomWidgets,
+      onEnvsChanged: onEnvsChanged,
     );
     return _instance!;
   }
@@ -44,6 +46,7 @@ class DebugOverlayController {
     this.onForceLogin,
     this.customDialog,
     this.bottomWidgets,
+    this.onEnvsChanged,
   });
 
   OverlayEntry? _entry;
@@ -59,6 +62,7 @@ class DebugOverlayController {
   void Function()? onForceLogin;
   Widget? customDialog;
   List<Widget>? bottomWidgets;
+  void Function(List<(String, String)> envs)? onEnvsChanged;
 
   void show(BuildContext context) {
     // debug 模式下不显示 -> 由外部控制
@@ -67,46 +71,48 @@ class DebugOverlayController {
 
     _isShown = true;
     _entry = OverlayEntry(
-      builder:
-          (_) => _DebugOverlayButton(
-            onTap: () async {
-              if (_entry != null) {
-                hide();
-              }
+      builder: (_) => _DebugOverlayButton(
+        onTap: () async {
+          if (_entry != null) {
+            hide();
+          }
 
-              if (!context.mounted) return;
-              await showDialog(
-                context: context,
-                builder:
-                    (_) =>
-                        customDialog ??
-                        DebugMenuDialog(
-                          currentEnvUrl: currentEnvUrl,
-                          envs: envs,
-                          onEnvSwitch: (env) {
-                            currentEnvUrl = env;
-                            onEnvSwitch?.call(env);
-                          },
-                          isProxyEnabled: isProxyEnabled,
-                          proxyIp: proxyIp,
-                          proxyPort: proxyPort,
-                          onSaveProxyConfig: (ip, port, enabled) {
-                            isProxyEnabled = enabled;
-                            proxyIp = ip;
-                            proxyPort = port;
-                            onSaveProxyConfig?.call(ip, port, enabled);
-                          },
-                          onForceLogin: onForceLogin,
-                          bottomWidgets: bottomWidgets,
-                        ),
-              );
+          if (!context.mounted) return;
+          await showDialog(
+            context: context,
+            builder: (_) =>
+                customDialog ??
+                DebugMenuDialog(
+                  currentEnvUrl: currentEnvUrl,
+                  envs: envs,
+                  onEnvSwitch: (env) {
+                    currentEnvUrl = env;
+                    onEnvSwitch?.call(env);
+                  },
+                  isProxyEnabled: isProxyEnabled,
+                  proxyIp: proxyIp,
+                  proxyPort: proxyPort,
+                  onSaveProxyConfig: (ip, port, enabled) {
+                    isProxyEnabled = enabled;
+                    proxyIp = ip;
+                    proxyPort = port;
+                    onSaveProxyConfig?.call(ip, port, enabled);
+                  },
+                  onForceLogin: onForceLogin,
+                  bottomWidgets: bottomWidgets,
+                  onEnvsChanged: (newEnvs) {
+                    envs = newEnvs;
+                    onEnvsChanged?.call(newEnvs);
+                  },
+                ),
+          );
 
-              // 弹窗关闭后重新显示按钮
-              if (context.mounted) {
-                show(context);
-              }
-            },
-          ),
+          // 弹窗关闭后重新显示按钮
+          if (context.mounted) {
+            show(context);
+          }
+        },
+      ),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -168,10 +174,9 @@ class _DebugOverlayButtonState extends State<_DebugOverlayButton> {
         onPanEnd: (_) {
           setState(() {
             final center = screenSize.width / 2;
-            _right =
-                (_right + _buttonSize / 2) < center
-                    ? _padding // 吸左
-                    : screenSize.width - _buttonSize - _padding; // 吸右
+            _right = (_right + _buttonSize / 2) < center
+                ? _padding // 吸左
+                : screenSize.width - _buttonSize - _padding; // 吸右
           });
         },
         onTap: widget.onTap,

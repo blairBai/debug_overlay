@@ -96,10 +96,18 @@ void main() {
 
     testWidgets('should add new environment when form is submitted',
         (WidgetTester tester) async {
+      bool callbackCalled = false;
+      List<(String, String)>? callbackEnvs;
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: DebugMenuDialog(),
+            body: DebugMenuDialog(
+              onEnvsChanged: (envs) {
+                callbackCalled = true;
+                callbackEnvs = envs;
+              },
+            ),
           ),
         ),
       );
@@ -119,6 +127,11 @@ void main() {
 
       // 应该显示新环境
       expect(find.text('New Environment'), findsOneWidget);
+
+      // 应该调用回调
+      expect(callbackCalled, isTrue);
+      expect(callbackEnvs, isNotNull);
+      expect(callbackEnvs!.length, 4); // 3个默认环境 + 1个新环境
     });
 
     testWidgets(
@@ -139,6 +152,38 @@ void main() {
       // 应该显示删除确认对话框
       expect(find.text('确认删除'), findsOneWidget);
       expect(find.text('确定要删除环境"开发环境"吗？'), findsOneWidget);
+    });
+
+    testWidgets('should call onEnvsChanged callback when deleting environment',
+        (WidgetTester tester) async {
+      bool callbackCalled = false;
+      List<(String, String)>? callbackEnvs;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugMenuDialog(
+              onEnvsChanged: (envs) {
+                callbackCalled = true;
+                callbackEnvs = envs;
+              },
+            ),
+          ),
+        ),
+      );
+
+      // 点击第一个删除按钮
+      await tester.tap(find.byIcon(Icons.delete).first);
+      await tester.pumpAndSettle();
+
+      // 确认删除
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+
+      // 应该调用回调
+      expect(callbackCalled, isTrue);
+      expect(callbackEnvs, isNotNull);
+      expect(callbackEnvs!.length, 2); // 3个默认环境 - 1个删除的环境
     });
   });
 }
