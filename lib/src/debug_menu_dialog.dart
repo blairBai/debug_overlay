@@ -32,8 +32,11 @@ class DebugMenuDialog extends StatefulWidget {
 class _DebugMenuDialogState extends State<DebugMenuDialog> {
   final _ipController = TextEditingController();
   final _portController = TextEditingController();
+  final _envNameController = TextEditingController();
+  final _envUrlController = TextEditingController();
 
   late bool _isProxyEnabled;
+  late List<(String, String)> _envs;
 
   @override
   void initState() {
@@ -41,6 +44,20 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
     _isProxyEnabled = widget.isProxyEnabled ?? false;
     _ipController.text = widget.proxyIp ?? '';
     _portController.text = widget.proxyPort ?? '8888';
+    // 初始化环境列表，如果外部传入为空则使用默认环境
+    _envs = widget.envs?.toList() ??
+        [
+          ('开发环境', 'https://dev.example.com'),
+          ('测试环境', 'https://test.example.com'),
+          ('预发布环境', 'https://staging.example.com'),
+        ];
+  }
+
+  @override
+  void dispose() {
+    _envNameController.dispose();
+    _envUrlController.dispose();
+    super.dispose();
   }
 
   // Functions
@@ -62,6 +79,131 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
     }
 
     return true;
+  }
+
+  bool validateEnv(String name, String url) {
+    if (name.trim().isEmpty) {
+      '请输入环境名称'.showToast(context);
+      return false;
+    }
+    if (url.trim().isEmpty) {
+      '请输入环境URL'.showToast(context);
+      return false;
+    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      '请输入有效的URL地址'.showToast(context);
+      return false;
+    }
+    return true;
+  }
+
+  void _addNewEnv() {
+    _envNameController.clear();
+    _envUrlController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Center(
+            child: Text(
+              '添加环境',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _envNameController,
+                decoration: const InputDecoration(
+                  labelText: '环境名称',
+                  hintText: '例如：开发环境',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _envUrlController,
+                decoration: const InputDecoration(
+                  labelText: '环境URL',
+                  hintText: '例如：https://dev.example.com',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = _envNameController.text.trim();
+                final url = _envUrlController.text.trim();
+
+                if (validateEnv(name, url)) {
+                  setState(() {
+                    _envs.add((name, url));
+                  });
+                  Navigator.of(context).pop();
+                  '环境添加成功'.showToast(context);
+                }
+              },
+              child: const Text('添加'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteEnv(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Center(
+            child: Text(
+              '确认删除',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+            ),
+          ),
+          content: Text(
+            '确定要删除环境"${_envs[index].$1}"吗？',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, color: Colors.black54),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _envs.removeAt(index);
+                });
+                Navigator.of(context).pop();
+                '环境删除成功'.showToast(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('删除'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Widgets
@@ -131,6 +273,7 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
     String url,
     bool selected,
     void Function((String, String)) onTap,
+    int index,
   ) {
     return Row(
       children: [
@@ -151,6 +294,12 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
           value: selected,
           onChanged: (_) => onTap((title, url)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+          onPressed: () => _deleteEnv(index),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
         ),
       ],
     );
@@ -179,47 +328,60 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
               ),
 
               // 环境切换
-              if (widget.envs != null && widget.envs!.isNotEmpty) ...[
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '环境切换',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      ...widget.envs!.map((e) {
-                        return Column(
-                          children: [
-                            const SizedBox(height: 8),
-                            _buildEnvItem(
-                              e.$1,
-                              e.$2,
-                              e.$2 == widget.currentEnvUrl,
-                              (env) {
-                                if (env.$2 == widget.currentEnvUrl) return;
-                                showEnvSwitchDialog(context, env.$2, () {
-                                  widget.onEnvSwitch?.call((env.$2));
-                                  Navigator.of(context).pop();
-                                });
-                              },
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          '环境切换',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: _addNewEnv,
+                          icon: const Icon(Icons.add, color: Colors.blue),
+                          tooltip: '添加环境',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ..._envs.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final e = entry.value;
+                      return Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          _buildEnvItem(
+                            e.$1,
+                            e.$2,
+                            e.$2 == widget.currentEnvUrl,
+                            (env) {
+                              if (env.$2 == widget.currentEnvUrl) return;
+                              showEnvSwitchDialog(context, env.$2, () {
+                                widget.onEnvSwitch?.call((env.$2));
+                                Navigator.of(context).pop();
+                              });
+                            },
+                            index,
+                          ),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+              ),
 
               const Divider(height: 1),
 
@@ -249,10 +411,9 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
                           ),
                           Switch(
                             value: _isProxyEnabled,
-                            onChanged:
-                                (value) => setState(() {
-                                  _isProxyEnabled = value;
-                                }),
+                            onChanged: (value) => setState(() {
+                              _isProxyEnabled = value;
+                            }),
                           ),
                         ],
                       ),

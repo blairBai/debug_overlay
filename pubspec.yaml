@@ -1,6 +1,6 @@
 name: debug_overlay
-description: "A new Flutter package project."
-version: 0.0.2
+description: "A Flutter debug overlay package with environment switching, proxy configuration, and custom environment management."
+version: 1.1.0
 homepage:
 
 environment:
