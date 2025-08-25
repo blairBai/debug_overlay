@@ -316,83 +316,29 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
     return AlertDialog(
       insetPadding: const EdgeInsets.all(16),
       contentPadding: EdgeInsets.zero,
-      content: SingleChildScrollView(
-        child: Container(
-          width: double.maxFinite,
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 标题
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                alignment: Alignment.center,
-                child: const Text(
-                  '测试工具',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      content: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.maxFinite,
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 标题
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    '测试工具',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
 
-              // 环境切换
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          '环境切换',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: _addNewEnv,
-                          icon: const Icon(Icons.add, color: Colors.blue),
-                          tooltip: '添加环境',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ..._envs.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final e = entry.value;
-                      return Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildEnvItem(
-                            e.$1,
-                            e.$2,
-                            e.$2 == widget.currentEnvUrl,
-                            (env) {
-                              if (env.$2 == widget.currentEnvUrl) return;
-                              showEnvSwitchDialog(context, env.$2, () {
-                                widget.onEnvSwitch?.call((env.$2));
-                                Navigator.of(context).pop();
-                              });
-                            },
-                            index,
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
-              ),
-
-              const Divider(height: 1),
-
-              // 抓包配置
-              if (widget.isProxyEnabled != null) ...[
+                // 环境切换
+                const Divider(height: 1),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -404,115 +350,177 @@ class _DebugMenuDialogState extends State<DebugMenuDialog> {
                       Row(
                         children: [
                           const Text(
-                            '代理/抓包',
+                            '环境切换',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const Spacer(),
-                          Text(
-                            _isProxyEnabled ? '开启中' : '未开启',
-                            style: TextStyle(color: Colors.grey.shade600),
-                          ),
-                          Switch(
-                            value: _isProxyEnabled,
-                            onChanged: (value) => setState(() {
-                              _isProxyEnabled = value;
-                            }),
+                          IconButton(
+                            onPressed: _addNewEnv,
+                            icon: const Icon(Icons.add, color: Colors.blue),
+                            tooltip: '添加环境',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
+                      ..._envs.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final e = entry.value;
+                        return Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildEnvItem(
+                              e.$1,
+                              e.$2,
+                              e.$2 == widget.currentEnvUrl,
+                              (env) {
+                                if (env.$2 == widget.currentEnvUrl) return;
+                                showEnvSwitchDialog(context, env.$2, () {
+                                  widget.onEnvSwitch?.call((env.$2));
+                                  Navigator.of(context).pop();
+                                });
+                              },
+                              index,
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ),
 
-                      // 输入框
-                      Row(
-                        children: [
-                          const Text('IP  : ', style: TextStyle(fontSize: 14)),
-                          Expanded(
-                            child: TextField(
-                              controller: _ipController,
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                border: UnderlineInputBorder(),
+                const Divider(height: 1),
+
+                // 抓包配置
+                if (widget.isProxyEnabled != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              '代理/抓包',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Text('Port: ', style: TextStyle(fontSize: 14)),
-                          Expanded(
-                            child: TextField(
-                              controller: _portController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                border: UnderlineInputBorder(),
-                              ),
+                            const Spacer(),
+                            Text(
+                              _isProxyEnabled ? '开启中' : '未开启',
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        '变更代理地址或端口号后\n请点击保存使配置生效~',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // 保存按钮
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final ip = _ipController.text.trim();
-                            final port = _portController.text.trim();
-                            if (!validateProxy(ip, port)) return;
-                            // print('保存代理配置：$ip:$port  开启状态：$_isProxyEnabled');
-                            widget.onSaveProxyConfig?.call(
-                              ip,
-                              port,
-                              _isProxyEnabled,
-                            );
-                            Navigator.of(context).pop(); // 关闭弹窗
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                          ),
-                          child: const Text('保存代理配置'),
+                            Switch(
+                              value: _isProxyEnabled,
+                              onChanged: (value) => setState(() {
+                                _isProxyEnabled = value;
+                              }),
+                            ),
+                          ],
                         ),
-                      ),
-
-                      if (widget.onForceLogin != null) ...[
-                        const SizedBox(height: 12),
-                        const Divider(height: 1),
                         const SizedBox(height: 8),
+
+                        // 输入框
+                        Row(
+                          children: [
+                            const Text('IP  : ',
+                                style: TextStyle(fontSize: 14)),
+                            Expanded(
+                              child: TextField(
+                                controller: _ipController,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
+                                  border: UnderlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Text('Port: ',
+                                style: TextStyle(fontSize: 14)),
+                            Expanded(
+                              child: TextField(
+                                controller: _portController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
+                                  border: UnderlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '变更代理地址或端口号后\n请点击保存使配置生效~',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 保存按钮
                         Align(
                           alignment: Alignment.centerRight,
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.pop(context);
-                              widget.onForceLogin?.call();
+                              final ip = _ipController.text.trim();
+                              final port = _portController.text.trim();
+                              if (!validateProxy(ip, port)) return;
+                              // print('保存代理配置：$ip:$port  开启状态：$_isProxyEnabled');
+                              widget.onSaveProxyConfig?.call(
+                                ip,
+                                port,
+                                _isProxyEnabled,
+                              );
+                              Navigator.of(context).pop(); // 关闭弹窗
                             },
-                            child: const Text('模拟登录/跳转'),
+                            style: ElevatedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                            ),
+                            child: const Text('保存代理配置'),
                           ),
                         ),
+
+                        if (widget.onForceLogin != null) ...[
+                          const SizedBox(height: 12),
+                          const Divider(height: 1),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                widget.onForceLogin?.call();
+                              },
+                              child: const Text('模拟登录/跳转'),
+                            ),
+                          ),
+                        ],
+                        ...?widget.bottomWidgets,
                       ],
-                      ...?widget.bottomWidgets,
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
